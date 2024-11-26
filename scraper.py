@@ -47,7 +47,7 @@ class AmazonScraper:
             self.base_url = f"https://www.amazon.{region_data['domain']}/s?k="
             
             try:
-                # Set up Chrome options for cloud environment
+                # Set up Chrome options
                 options = Options()
                 options.add_argument('--headless')
                 options.add_argument('--disable-gpu')
@@ -57,15 +57,26 @@ class AmazonScraper:
                 options.add_argument('--disable-extensions')
                 options.add_argument(f'user-agent={self.ua.random}')
                 
-                # Initialize Chrome WebDriver for cloud
-                service = Service('/usr/bin/chromedriver')
-                self.driver = webdriver.Chrome(service=service, options=options)
+                try:
+                    # Try cloud environment first
+                    service = Service('/usr/bin/chromedriver')
+                    self.driver = webdriver.Chrome(service=service, options=options)
+                except Exception as cloud_error:
+                    logging.info(f"Cloud driver failed, trying local setup: {str(cloud_error)}")
+                    try:
+                        # Try local environment with ChromeDriverManager
+                        service = Service(ChromeDriverManager().install())
+                        self.driver = webdriver.Chrome(service=service, options=options)
+                    except Exception as local_error:
+                        logging.error(f"Local driver failed: {str(local_error)}")
+                        raise Exception("Failed to initialize WebDriver in both cloud and local environments")
+                
                 self.driver.implicitly_wait(10)
                 logging.info("Chrome WebDriver initialized successfully")
                 
             except Exception as e:
                 logging.error(f"Failed to initialize WebDriver: {str(e)}")
-                raise Exception("Failed to initialize WebDriver in cloud environment")
+                raise Exception("Failed to initialize WebDriver")
 
         except Exception as e:
             logging.error(f"Error initializing scraper: {str(e)}", exc_info=True)
