@@ -1,6 +1,6 @@
-selenium>=4.10.0
-webdriver-manager>=3.8.6
-fake-useragent>=1.1.1
-pandas>=2.0.0
-streamlit>=1.24.0
-webdriver-manager>=3.8.6[firefox]
+selenium==4.15.2
+webdriver-manager==4.0.1
+fake-useragent==1.3.0
+pandas==2.1.1
+streamlit==1.29.0
+webdriver-manager==4.0.1[firefox]
