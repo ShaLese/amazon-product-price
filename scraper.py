@@ -10,6 +10,9 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.edge.service import Service as EdgeService
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
+from selenium.webdriver.firefox.service import Service as FirefoxService
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from webdriver_manager.firefox import GeckoDriverManager
 import pandas as pd
 from fake_useragent import UserAgent
 import logging
@@ -62,82 +65,39 @@ class AmazonScraper:
             region_data = self.region_settings[self.region]
             self.base_url = f"https://www.amazon.{region_data['domain']}/s?k="
             
-            # Initialize Chrome options
-            self.chrome_options = Options()
-            self.chrome_options.add_argument('--headless=new')  # Use new headless mode
-            self.chrome_options.add_argument('--disable-gpu')
-            self.chrome_options.add_argument('--no-sandbox')
-            self.chrome_options.add_argument('--disable-dev-shm-usage')
-            self.chrome_options.add_argument(f'user-agent={self.ua.random}')
-            
             # Initialize the driver
             try:
-                # Try Microsoft Edge first since we're on Windows
-                logging.info("Attempting to initialize Edge WebDriver...")
-                edge_options = EdgeOptions()
-                edge_options.add_argument('--headless=new')
-                edge_options.add_argument('--disable-gpu')
-                edge_options.add_argument('--no-sandbox')
-                edge_options.add_argument('--disable-dev-shm-usage')
-                edge_options.add_argument(f'user-agent={self.ua.random}')
-                
-                # Add debugging information
-                logging.info("Checking Edge installation...")
-                edge_path = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
-                if os.path.exists(edge_path):
-                    logging.info("Microsoft Edge found at default location")
-                    edge_options.binary_location = edge_path
-                else:
-                    logging.warning("Microsoft Edge not found at default location")
+                # Try Firefox as it often has better compatibility
+                logging.info("Attempting to initialize Firefox WebDriver...")
+                firefox_options = FirefoxOptions()
+                firefox_options.add_argument('--headless')
+                firefox_options.add_argument('--disable-gpu')
+                firefox_options.add_argument('--no-sandbox')
+                firefox_options.add_argument(f'user-agent={self.ua.random}')
                 
                 try:
-                    driver_path = EdgeChromiumDriverManager().install()
-                    logging.info(f"Edge WebDriver downloaded to: {driver_path}")
-                    service = EdgeService(driver_path)
-                    self.driver = webdriver.Edge(service=service, options=edge_options)
+                    driver_path = GeckoDriverManager().install()
+                    logging.info(f"Firefox WebDriver downloaded to: {driver_path}")
+                    service = FirefoxService(driver_path)
+                    self.driver = webdriver.Firefox(service=service, options=firefox_options)
                     self.driver.implicitly_wait(10)
-                    logging.info("Edge WebDriver initialized successfully")
-                except Exception as edge_driver_error:
-                    logging.error(f"Edge WebDriver installation failed: {str(edge_driver_error)}")
-                    raise
-                
-            except Exception as edge_error:
-                logging.error(f"Failed to initialize Edge WebDriver: {str(edge_error)}")
-                logging.info("Attempting to use Chrome WebDriver as fallback...")
-                
-                try:
-                    # Try Chrome as fallback
-                    chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
-                    if os.path.exists(chrome_path):
-                        logging.info("Google Chrome found at default location")
-                        self.chrome_options.binary_location = chrome_path
-                    else:
-                        logging.warning("Google Chrome not found at default location")
-                    
-                    try:
-                        driver_path = ChromeDriverManager().install()
-                        logging.info(f"Chrome WebDriver downloaded to: {driver_path}")
-                        service = Service(driver_path)
-                        self.driver = webdriver.Chrome(service=service, options=self.chrome_options)
-                        self.driver.implicitly_wait(10)
-                        logging.info("Chrome WebDriver initialized successfully as fallback")
-                    except Exception as chrome_driver_error:
-                        logging.error(f"Chrome WebDriver installation failed: {str(chrome_driver_error)}")
-                        raise
-                        
-                except Exception as chrome_error:
-                    logging.error(f"Failed to initialize Chrome WebDriver: {str(chrome_error)}")
+                    logging.info("Firefox WebDriver initialized successfully")
+                except Exception as firefox_error:
+                    logging.error(f"Firefox WebDriver installation failed: {str(firefox_error)}")
                     error_msg = (
-                        "Failed to initialize both Edge and Chrome WebDrivers. "
-                        "Please ensure either Microsoft Edge or Google Chrome is installed "
-                        "and try the following steps:\n"
-                        "1. Verify that Microsoft Edge or Google Chrome is installed\n"
+                        "Failed to initialize Firefox WebDriver. "
+                        "Please ensure Firefox is installed and try the following steps:\n"
+                        "1. Install Mozilla Firefox from https://www.mozilla.org/firefox/new/\n"
                         "2. Try running the script with administrator privileges\n"
                         "3. Check your internet connection\n"
                         "4. Temporarily disable your antivirus software"
                     )
                     raise Exception(error_msg)
             
+            except Exception as e:
+                logging.error(f"Error initializing scraper: {str(e)}", exc_info=True)
+                raise
+
         except Exception as e:
             logging.error(f"Error initializing scraper: {str(e)}", exc_info=True)
             raise
