@@ -1,18 +1,11 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.edge.service import Service as EdgeService
-from selenium.webdriver.edge.options import Options as EdgeOptions
-from webdriver_manager.microsoft import EdgeChromiumDriverManager
-from selenium.webdriver.firefox.service import Service as FirefoxService
-from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from webdriver_manager.firefox import GeckoDriverManager
 import pandas as pd
 from fake_useragent import UserAgent
 import logging
@@ -27,7 +20,7 @@ try:
     
     # Configure logging with both file and console output
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s',
         handlers=[
             logging.FileHandler(log_file, mode='w', encoding='utf-8'),
@@ -65,38 +58,24 @@ class AmazonScraper:
             region_data = self.region_settings[self.region]
             self.base_url = f"https://www.amazon.{region_data['domain']}/s?k="
             
-            # Initialize the driver
             try:
-                # Try Firefox as it often has better compatibility
-                logging.info("Attempting to initialize Firefox WebDriver...")
-                firefox_options = FirefoxOptions()
-                firefox_options.add_argument('--headless')
-                firefox_options.add_argument('--disable-gpu')
-                firefox_options.add_argument('--no-sandbox')
-                firefox_options.add_argument(f'user-agent={self.ua.random}')
+                # Set up Chrome options
+                options = Options()
+                options.add_argument('--headless')
+                options.add_argument('--disable-gpu')
+                options.add_argument('--no-sandbox')
+                options.add_argument('--disable-dev-shm-usage')
+                options.add_argument(f'user-agent={self.ua.random}')
                 
-                try:
-                    driver_path = GeckoDriverManager().install()
-                    logging.info(f"Firefox WebDriver downloaded to: {driver_path}")
-                    service = FirefoxService(driver_path)
-                    self.driver = webdriver.Firefox(service=service, options=firefox_options)
-                    self.driver.implicitly_wait(10)
-                    logging.info("Firefox WebDriver initialized successfully")
-                except Exception as firefox_error:
-                    logging.error(f"Firefox WebDriver installation failed: {str(firefox_error)}")
-                    error_msg = (
-                        "Failed to initialize Firefox WebDriver. "
-                        "Please ensure Firefox is installed and try the following steps:\n"
-                        "1. Install Mozilla Firefox from https://www.mozilla.org/firefox/new/\n"
-                        "2. Try running the script with administrator privileges\n"
-                        "3. Check your internet connection\n"
-                        "4. Temporarily disable your antivirus software"
-                    )
-                    raise Exception(error_msg)
-            
+                # Initialize Chrome WebDriver
+                service = Service(ChromeDriverManager().install())
+                self.driver = webdriver.Chrome(service=service, options=options)
+                self.driver.implicitly_wait(10)
+                logging.info("Chrome WebDriver initialized successfully")
+                
             except Exception as e:
-                logging.error(f"Error initializing scraper: {str(e)}", exc_info=True)
-                raise
+                logging.error(f"Failed to initialize WebDriver: {str(e)}")
+                raise Exception("Please ensure Google Chrome is installed and try running with administrator privileges")
 
         except Exception as e:
             logging.error(f"Error initializing scraper: {str(e)}", exc_info=True)
