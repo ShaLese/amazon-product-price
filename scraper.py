@@ -55,11 +55,10 @@ class AmazonScraper:
                 options.add_argument('--disable-dev-shm-usage')
                 options.add_argument('--disable-software-rasterizer')
                 options.add_argument('--disable-extensions')
-                options.add_argument('--remote-debugging-port=9222')
                 options.add_argument(f'user-agent={self.ua.random}')
                 
                 # Initialize Chrome WebDriver for cloud
-                service = Service()
+                service = Service('/usr/bin/chromedriver')
                 self.driver = webdriver.Chrome(service=service, options=options)
                 self.driver.implicitly_wait(10)
                 logging.info("Chrome WebDriver initialized successfully")
