@@ -3,9 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
+import undetected_chromedriver as uc
 import pandas as pd
 from fake_useragent import UserAgent
 import logging
@@ -48,29 +46,14 @@ class AmazonScraper:
             
             try:
                 # Set up Chrome options
-                options = Options()
+                options = uc.ChromeOptions()
                 options.add_argument('--headless')
-                options.add_argument('--disable-gpu')
                 options.add_argument('--no-sandbox')
                 options.add_argument('--disable-dev-shm-usage')
-                options.add_argument('--disable-software-rasterizer')
-                options.add_argument('--disable-extensions')
                 options.add_argument(f'user-agent={self.ua.random}')
                 
-                try:
-                    # Try cloud environment first
-                    service = Service('/usr/bin/chromedriver')
-                    self.driver = webdriver.Chrome(service=service, options=options)
-                except Exception as cloud_error:
-                    logging.info(f"Cloud driver failed, trying local setup: {str(cloud_error)}")
-                    try:
-                        # Try local environment with ChromeDriverManager
-                        service = Service(ChromeDriverManager().install())
-                        self.driver = webdriver.Chrome(service=service, options=options)
-                    except Exception as local_error:
-                        logging.error(f"Local driver failed: {str(local_error)}")
-                        raise Exception("Failed to initialize WebDriver in both cloud and local environments")
-                
+                # Initialize undetected-chromedriver
+                self.driver = uc.Chrome(options=options)
                 self.driver.implicitly_wait(10)
                 logging.info("Chrome WebDriver initialized successfully")
                 

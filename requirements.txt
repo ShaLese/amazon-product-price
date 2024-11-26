@@ -1,5 +1,5 @@
 selenium==4.9.1
-webdriver-manager==3.8.6
+undetected-chromedriver==3.5.4
 fake-useragent==1.1.1
 pandas==1.5.3
 streamlit==1.22.0
