@@ -72,13 +72,8 @@ class AmazonScraper:
             
             # Initialize the driver
             try:
-                service = Service(ChromeDriverManager().install())
-                self.driver = webdriver.Chrome(service=service, options=self.chrome_options)
-                self.driver.implicitly_wait(10)
-                logging.info("Selenium WebDriver initialized successfully")
-            except Exception as driver_error:
-                logging.error(f"Failed to initialize Chrome WebDriver: {str(driver_error)}")
-                logging.info("Attempting to use Edge WebDriver as fallback...")
+                # Try Microsoft Edge first since we're on Windows
+                logging.info("Attempting to initialize Edge WebDriver...")
                 edge_options = EdgeOptions()
                 edge_options.add_argument('--headless=new')
                 edge_options.add_argument('--disable-gpu')
@@ -89,7 +84,18 @@ class AmazonScraper:
                 service = EdgeService(EdgeChromiumDriverManager().install())
                 self.driver = webdriver.Edge(service=service, options=edge_options)
                 self.driver.implicitly_wait(10)
-                logging.info("Edge WebDriver initialized successfully as fallback")
+                logging.info("Edge WebDriver initialized successfully")
+            except Exception as edge_error:
+                logging.error(f"Failed to initialize Edge WebDriver: {str(edge_error)}")
+                logging.info("Attempting to use Chrome WebDriver as fallback...")
+                try:
+                    service = Service(ChromeDriverManager().install())
+                    self.driver = webdriver.Chrome(service=service, options=self.chrome_options)
+                    self.driver.implicitly_wait(10)
+                    logging.info("Chrome WebDriver initialized successfully as fallback")
+                except Exception as chrome_error:
+                    logging.error(f"Failed to initialize Chrome WebDriver: {str(chrome_error)}")
+                    raise Exception("Failed to initialize both Edge and Chrome WebDrivers. Please ensure either Microsoft Edge or Google Chrome is installed.")
             
         except Exception as e:
             logging.error(f"Error initializing scraper: {str(e)}", exc_info=True)
