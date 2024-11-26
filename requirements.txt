@@ -3,3 +3,5 @@ webdriver-manager==3.8.6
 fake-useragent==1.1.1
 pandas==1.5.3
 streamlit==1.22.0
+requests==2.31.0
+beautifulsoup4==4.12.2

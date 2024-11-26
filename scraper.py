@@ -14,24 +14,12 @@ import os
 import sys
 from urllib.parse import quote_plus
 
-try:
-    # Create logs directory if it doesn't exist
-    log_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'scraper.log')
-    
-    # Configure logging with both file and console output
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler(log_file, mode='w', encoding='utf-8'),
-            logging.StreamHandler(sys.stdout)
-        ]
-    )
-
-    logging.info("Logging system initialized successfully")
-except Exception as e:
-    print(f"Error setting up logging: {str(e)}")
-    sys.exit(1)
+# Configure logging for cloud environment
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
 
 class AmazonScraper:
     def __init__(self, csv_file, region='US'):
@@ -59,23 +47,26 @@ class AmazonScraper:
             self.base_url = f"https://www.amazon.{region_data['domain']}/s?k="
             
             try:
-                # Set up Chrome options
+                # Set up Chrome options for cloud environment
                 options = Options()
                 options.add_argument('--headless')
                 options.add_argument('--disable-gpu')
                 options.add_argument('--no-sandbox')
                 options.add_argument('--disable-dev-shm-usage')
+                options.add_argument('--disable-software-rasterizer')
+                options.add_argument('--disable-extensions')
+                options.add_argument('--remote-debugging-port=9222')
                 options.add_argument(f'user-agent={self.ua.random}')
                 
-                # Initialize Chrome WebDriver
-                service = Service(ChromeDriverManager().install())
+                # Initialize Chrome WebDriver for cloud
+                service = Service()
                 self.driver = webdriver.Chrome(service=service, options=options)
                 self.driver.implicitly_wait(10)
                 logging.info("Chrome WebDriver initialized successfully")
                 
             except Exception as e:
                 logging.error(f"Failed to initialize WebDriver: {str(e)}")
-                raise Exception("Please ensure Google Chrome is installed and try running with administrator privileges")
+                raise Exception("Failed to initialize WebDriver in cloud environment")
 
         except Exception as e:
             logging.error(f"Error initializing scraper: {str(e)}", exc_info=True)
